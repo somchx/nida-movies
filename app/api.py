@@ -3,12 +3,6 @@ from app import app
 from bson import ObjectId
 from datetime import datetime
 
-@app.route('/items', methods=['GET'])
-def get_items():
-    collection = app.db["items"]
-    items = list(collection.find({}, {"_id": 0}))
-    return jsonify(items)
-
 @app.route('/api/users')
 def get_users():
     page = int(request.args.get("page", 1))
