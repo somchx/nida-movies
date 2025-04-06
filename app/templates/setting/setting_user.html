@@ -1,0 +1,180 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Setting - Users</title>
+</head>
+
+<body>
+    <nav>
+        <div class="logo">🎬 NIDA Movies</div>
+        <div class="menu">
+            <a href="/home">Home</a>
+            <div class="dropdown">
+                <a href="#" class="dropbtn">Setting ▾</a>
+                <div class="dropdown-content">
+                    <a href="/setting/movie">Setting Movie</a>
+                    <a href="/setting/user">Setting User</a>
+                </div>
+            </div>
+            <a href="/login">Logout</a>
+        </div>
+    </nav>
+
+    <div class="user-container">
+        <h1>จัดการผู้ใช้ (Setting User)</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>ชื่อ</th>
+                    <th>อีเมล</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="user-table">
+            </tbody>
+        </table>
+        <div class="pagination">
+            <button id="prevBtn">« ก่อนหน้า</button>
+            <span id="pageInfo">หน้า 1</span>
+            <button id="nextBtn">ถัดไป »</button>
+        </div>
+    </div>
+
+
+
+</body>
+<!-- Modal แก้ไข -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2>แก้ไขผู้ใช้</h2>
+        <form id="editForm">
+            <label>ชื่อ:</label><br>
+            <input type="text" id="editName" required><br><br>
+            <label>อีเมล:</label><br>
+            <input type="email" id="editEmail" required><br><br>
+            <button type="submit">บันทึก</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let currentPage = 1;
+    const limit = 5;
+
+    function loadUsers(page) {
+        fetch(`/api/users?page=${page}&limit=${limit}`)
+            .then(res => res.json())
+            .then(result => {
+                const users = result.users;
+                const totalPages = result.totalPages;
+
+                const table = document.getElementById('user-table');
+                table.innerHTML = ""; // เคลียร์ก่อน
+
+                users.forEach((user, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${(page - 1) * limit + index + 1}</td>
+                        <td>${user.name || '-'}</td>
+                        <td class="table-email">${user.email || '-'}</td>
+                        <td>
+                            <button onclick="editUser('${user.email}')">แก้ไข</button>
+                            <button onclick="deleteUser('${user.email}')">ลบ</button>
+                        </td>
+                        `;
+                    table.appendChild(row);
+                });
+
+                // อัปเดต page info
+                document.getElementById("pageInfo").textContent = `หน้า ${page} / ${totalPages}`;
+
+                // ปิด/เปิดปุ่ม
+                document.getElementById("prevBtn").disabled = (page === 1);
+                document.getElementById("nextBtn").disabled = (page === totalPages);
+
+                currentPage = page;
+            })
+            .catch(err => {
+                console.error("Error loading users:", err);
+                const table = document.getElementById('user-table');
+                table.innerHTML = `<tr><td colspan="3">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
+            });
+    }
+
+    function editUser(email) {
+        alert(`Edit user: ${email}`);
+    }
+
+    function deleteUser(email) {
+        if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ ${email} ?`)) {
+            fetch(`/api/users/${encodeURIComponent(email)}`, {
+                method: 'DELETE'
+            })
+                .then(res => {
+                    if (res.ok) {
+                        alert("ลบสำเร็จ");
+                        loadUsers(currentPage);
+                    } else {
+                        alert("เกิดข้อผิดพลาดในการลบ");
+                    }
+                });
+        }
+    }
+
+    let editingEmail = null;
+
+    function editUser(email) {
+        // ดึงข้อมูล user (หรือเก็บไว้ตั้งแต่แรกก็ได้)
+        fetch(`/api/users/${encodeURIComponent(email)}`)
+            .then(res => res.json())
+            .then(user => {
+                editingEmail = user.email;
+                document.getElementById('editName').value = user.name;
+                document.getElementById('editEmail').value = user.email;
+                document.getElementById('editModal').style.display = 'block';
+            });
+    }
+
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+        editingEmail = null;
+    }
+    document.getElementById('editForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const updatedUser = {
+            name: document.getElementById('editName').value,
+            email: document.getElementById('editEmail').value
+        };
+
+        fetch(`/api/users/${encodeURIComponent(editingEmail)}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedUser)
+        })
+            .then(res => {
+                if (res.ok) {
+                    alert("บันทึกสำเร็จ");
+                    closeModal();
+                    loadUsers(currentPage);
+                } else {
+                    alert("เกิดข้อผิดพลาดในการบันทึก");
+                }
+            });
+    });
+
+    document.getElementById("prevBtn").addEventListener("click", () => loadUsers(currentPage - 1));
+    document.getElementById("nextBtn").addEventListener("click", () => loadUsers(currentPage + 1));
+
+    loadUsers(1);
+</script>
+
+</html>

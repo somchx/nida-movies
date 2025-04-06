@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>NIDA Movies</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #000;
+            color: white;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: #111;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2em;
+        }
+
+        .login-button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background-color: #e50914;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            margin: 40px 20px 10px;
+        }
+
+        /* Slider */
+        .slider {
+            display: flex;
+            overflow-x: auto;
+            gap: 20px;
+            padding: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .slider::-webkit-scrollbar {
+            display: none;
+        }
+
+        .movie-slide {
+            min-width: 80px;
+            flex: 0 0 auto;
+            position: relative;
+        }
+
+        .movie-slide img {
+            height: 250px;
+            width: auto;
+            border-radius: 10px;
+            object-fit: contain;
+        }
+
+
+        .movie-rank {
+            position: absolute;
+            top: 5px;
+            left: 10px;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        /* FAQ */
+        .faq-container {
+            margin: 40px 20px;
+            max-width: auto;
+        }
+
+        .faq-item {
+            background: #222;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 15px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .faq-question::after {
+            content: "+";
+            position: absolute;
+            right: 20px;
+            font-size: 1.5em;
+            transition: transform 0.3s;
+        }
+
+        .faq-item.active .faq-question::after {
+            transform: rotate(45deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            background: #333;
+            padding: 0 20px;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 200px;
+            padding: 15px 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>🎬 ยินดีต้อนรับสู่ NIDA Movies</h1>
+        <button class="login-button" onclick="window.location.href='/login'">เข้าสู่ระบบ</button>
+    </header>
+
+    <div class="section-title">กำลังฮิต</div>
+    <div class="slider" id="popular-slider"></div>
+    <div class="section-title">รายละเอียดเกี่ยวกับโปรเจค</div>
+    <div class="faq-container">
+
+        <div class="faq-item">
+            <div class="faq-question">สมาชิก</div>
+            <div class="faq-answer">
+                6710421004 นางสาวชนัญญา เอี่ยมประโคน<br>
+                6710421005 นายวรวัฒน์ เจอร์รี่ อาว<br>
+                นักศึกษาชั้นปีที่ 1 สาขาวิชาวิทยาการคอมพิวเตอร์และระบบสารสนเทศ คณะสถิติประยุกต์ สถาบันบัณฑิตพัฒนบริหารศาสตร์
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">นี่คือระบบอะไร</div>
+            <div class="faq-answer">
+                ระบบที่พัฒนาขึ้นคือ “เว็บไซต์ดูหนังคลาสสิก” ซึ่งเป็นระบบจัดการข้อมูลภาพยนตร์ในรูปแบบเว็บแอปพลิเคชัน
+                โดยดึงข้อมูลจากฐานข้อมูล MongoDB ที่บรรจุข้อมูลภาพยนตร์แบบโครงสร้าง JSON จากตัวอย่าง dataset ของ MongoDB
+                (เช่น sample_mflix) ระบบสามารถแสดงข้อมูลโปสเตอร์ ชื่อเรื่อง เรื่องย่อ เรตติ้ง
+                และข้อมูลเบื้องหลังของภาพยนตร์ได้อย่างครบถ้วน พร้อมทั้งจัดทำระบบสำหรับผู้ดูแล (Admin) เพื่อเพิ่ม ลบ
+                แก้ไขข้อมูลได้จากหน้าจอเดียวกัน
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">รายละเอียดการพัฒนาระบบ</div>
+            <div class="faq-answer">
+                ระบบนี้ถูกพัฒนาขึ้นโดยใช้ภาษา Python ผ่าน Framework Flask สำหรับการเขียน Web Backend และเชื่อมต่อกับ
+                MongoDB Atlas ซึ่งเป็นบริการฐานข้อมูลแบบ NoSQL บน Cloud โดยใช้ไลบรารี `pymongo` และ `flask-cors`
+                เพื่อรองรับการเชื่อมต่อ API และการร้องขอข้ามต้นทาง (Cross-Origin Request) ส่วนฝั่ง Frontend พัฒนาโดยใช้
+                HTML, CSS, JavaScript ธรรมดา ไม่ใช้ Framework เพิ่มเติม เพื่อความเรียบง่ายและเรียนรู้การทำงานจากพื้นฐาน
+                ระบบมีทั้งหน้าสำหรับแสดงผลหนัง (Home), หน้า Landing, หน้า Login และหน้า Setting สำหรับผู้ดูแลระบบ
+                ซึ่งสามารถจัดการข้อมูลหนังและข้อมูลผู้ใช้งานได้
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">นำเสนอใคร</div>
+            <div class="faq-answer">
+                โปรเจคนี้จัดทำขึ้นเพื่อส่งมอบและนำเสนอแก่
+                <strong>ผศ.ดร.อรวรรณ เชาวลิต ผู้สอนในรายวิชาระบบฐานข้อมูลขั้นสูง</strong> ในภาคการศึกษาปัจจุบัน 2/2567
+                โดยมีจุดประสงค์เพื่อประยุกต์ใช้ความรู้ที่เรียนมาในการพัฒนาระบบจริง ตั้งแต่การออกแบบฐานข้อมูล พัฒนา API
+                ไปจนถึงการออกแบบหน้าเว็บสำหรับผู้ใช้งานจริง
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-question">เทคโนโลยีที่ใช้</div>
+            <div class="faq-answer">
+                <ul>
+                    <li><strong>Backend:</strong> Python, Flask, Flask-CORS, Pymongo</li>
+                    <li><strong>Database:</strong> MongoDB Atlas (Cloud NoSQL)</li>
+                    <li><strong>Frontend:</strong> HTML5, CSS, JavaScript</li>
+                    <li><strong>Deployment:</strong> พัฒนาและทดสอบภายในเครื่องผ่าน Localhost</li>
+                    <li><strong>Tools:</strong> VSCode, MongoDB Compass, Postman, Git</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <script>
+        fetch('/api/movies/landing')
+            .then(res => res.json())
+            .then(data => {
+                const slider = document.getElementById('popular-slider');
+                data.slice(0, 10).forEach((movie, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'movie-slide';
+                    slide.innerHTML = `
+                        <div class="movie-rank">${index + 1}</div>
+                        <img src="${movie.poster || 'https://via.placeholder.com/150'}" alt="${movie.title}">
+                    `;
+                    slider.appendChild(slide);
+                });
+            });
+
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', () => {
+                const item = question.parentElement;
+                item.classList.toggle('active');
+            });
+        });
+    </script>
+
+</body>
+
+</html>

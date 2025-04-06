@@ -1,0 +1,118 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>{{ movie.title }}</title>
+</head>
+
+<body>
+  <nav>
+    <div class="logo">🎬 NIDA Movies</div>
+    <div class="menu">
+      <a href="/home">Home</a>
+      <div class="dropdown">
+        <a href="#" class="dropbtn">Setting ▾</a>
+        <div class="dropdown-content">
+          <a href="/setting/movie">Setting Movie</a>
+          <a href="/setting/user">Setting User</a>
+        </div>
+      </div>
+      <a href="/login">Logout</a>
+    </div>
+  </nav>
+
+  <!-- ✅ Main Content -->
+  <div class="movie-container">
+    <div class="movie-poster">
+      <img src="{{ movie.poster or '/static/images/no_img.png' }}" alt="{{ movie.title }}">
+    </div>
+    <div class="movie-info">
+      <h1>{{ movie.title }}</h1>
+
+      <div class="genres">
+        {% for genre in movie.genres %}
+        <span class="genre-tag">{{ genre }}</span>
+        {% endfor %}
+      </div>
+
+      <div class="movie-meta">
+        <span>IMDB: ⭐ {{ movie.imdb.rating or '-' }} / Votes: {{ movie.imdb.votes or 0 }}</span><br>
+        <span>Runtime: {{ movie.runtime }} mins | Rated: {{ movie.rated or 'N/A' }}</span>
+      </div>
+
+      <div class="movie-plot">
+        <p>{{ movie.fullplot or movie.plot }}</p>
+      </div>
+
+      <div class="movie-columns">
+        <div>
+          <span class="label">Directors</span>
+          <p>{{ movie.directors | join(', ') }}</p>
+
+          <span class="label">Writers</span>
+          <p>{{ movie.writers | join(', ') }}</p>
+        </div>
+        <div>
+          <span class="label">Cast</span>
+          <p>{{ movie.cast | join(', ') }}</p>
+
+          <span class="label">Languages</span>
+          <p>{{ movie.languages | join(', ') }}</p>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button>WATCH MOVIE ▶</button>
+      </div>
+    </div>
+  </div>
+  <div class="comments-section">
+    <h3>ความคิดเห็น</h3>
+    {% if comments %}
+    {% for comment in comments %}
+    <div class="comment-item">
+      <strong>{{ comment.name }}</strong>
+      <div class="comment-date">{{ comment.formatted_date or '' }}</div>
+      <p>{{ comment.text }}</p>
+    </div>
+
+    {% endfor %}
+    {% else %}
+    <p class="no-comments">ยังไม่มีความคิดเห็นสำหรับภาพยนตร์นี้</p>
+    {% endif %}
+
+  </div>
+
+  <div class="comment-form">
+    <h4>เขียนความคิดเห็นของคุณ</h4>
+    <form id="commentForm">
+      <input type="text" id="commentName" placeholder="ชื่อของคุณ" required>
+      <textarea id="commentText" placeholder="พิมพ์ความคิดเห็น..." rows="4" required></textarea>
+      <button type="submit">แสดงความคิดเห็น</button>
+    </form>
+  </div>
+</body>
+</html>
+<script>
+  document.getElementById("commentForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    const name = document.getElementById("commentName").value;
+    const text = document.getElementById("commentText").value;
+    const movieId = "{{ movie._id }}";
+
+    fetch("/api/comments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, text, movie_id: movieId })
+    }).then(res => {
+      if (res.ok) {
+        alert("ขอบคุณสำหรับความคิดเห็น!");
+        location.reload();
+      } else {
+        alert("เกิดข้อผิดพลาดในการส่งความคิดเห็น");
+      }
+    });
+  });
+</script>

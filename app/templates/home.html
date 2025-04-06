@@ -1,0 +1,141 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>All Films</title>
+    <style>
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .movie-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.05);
+        }
+
+        .movie-card img {
+            width: 100%;
+            border-radius: 5px;
+        }
+
+        .movie-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 10px 0 5px 0;
+        }
+
+        .stars {
+            color: gold;
+            font-size: 14px;
+        }
+
+        .pagination {
+            text-align: center;
+            margin: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 15px;
+            margin: 0 5px;
+            background-color: #e50914;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .pagination button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo">🎬 NIDA Movies</div>
+        <div class="menu">
+            <div class="dropdown">
+                <a href="#" class="dropbtn">Setting ▾</a>
+                <div class="dropdown-content">
+                    <a href="/setting/movie">Setting Movie</a>
+                    <a href="/setting/user">Setting User</a>
+                </div>
+            </div>
+            <a href="/login">Logout</a>
+        </div>
+    </nav>
+
+    <h1 class="text-start">All Films</h1>
+    <div class="movie-grid" id="movies"></div>
+
+    <div class="pagination">
+        <button id="prevBtn">« ก่อนหน้า</button>
+        <span id="pageInfo">หน้า 1</span>
+        <button id="nextBtn">ถัดไป »</button>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const limit = 14;
+
+        function loadMovies(page) {
+            fetch(`/api/movies/pagination?page=${page}&limit=${limit}`)
+                .then(res => res.json())
+                .then(result => {
+                    const data = result.movies || result;
+                    const totalPages = result.totalPages || 1;
+                    const container = document.getElementById('movies');
+                    container.innerHTML = ""; 
+
+                    data.forEach(movie => {
+                        console.log("movie",movie)
+                        const card = document.createElement('div');
+                        card.className = 'movie-card';
+                        card.style.cursor = "pointer";
+                        card.addEventListener("click", () => {
+                            window.location.href = `/movie/detail/${movie._id}`;
+                        });
+
+                        const stars = "⭐".repeat(Math.min(movie.imdb?.rating || 0, 5));
+                        const posterUrl = movie.poster || "/static/images/no_img.png";
+
+                        card.innerHTML = `
+                            <img src="${posterUrl}" alt="${movie.title}">
+                            <div class="movie-title">${movie.title || 'Unknown Title'}</div>
+                            <div class="stars">${stars}</div>
+                        `;
+                        container.appendChild(card);
+                    });
+
+
+                    document.getElementById("pageInfo").textContent = `หน้า ${page} / ${totalPages}`;
+                    document.getElementById("prevBtn").disabled = (page === 1);
+                    document.getElementById("nextBtn").disabled = (page === totalPages);
+
+                    currentPage = page;
+                });
+        }
+
+        document.getElementById("prevBtn").addEventListener("click", () => loadMovies(currentPage - 1));
+        document.getElementById("nextBtn").addEventListener("click", () => loadMovies(currentPage + 1));
+
+        loadMovies(1);
+    </script>
+</body>
+
+</html>

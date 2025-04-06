@@ -1,0 +1,198 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Setting - Movies</title>
+</head>
+<style>
+    .poster-img {
+        height: 60px;
+        border-radius: 4px;
+    }
+</style>
+
+<body>
+    <nav>
+        <div class="logo">🎬 NIDA Movies</div>
+        <div class="menu">
+            <a href="/home">Home</a>
+            <div class="dropdown">
+                <a href="#" class="dropbtn">Setting ▾</a>
+                <div class="dropdown-content">
+                    <a href="/setting/movie">Setting Movie</a>
+                    <a href="/setting/user">Setting User</a>
+                </div>
+            </div>
+            <a href="/login">Logout</a>
+        </div>
+    </nav>
+
+    <div class="user-container">
+        <h1>จัดการหนัง (Setting Movie)</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>โปสเตอร์</th>
+                    <th>ชื่อเรื่อง</th>
+                    <th>ปี</th>
+                    <th>เรตติ้ง</th>
+                    <th>ประเภท</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="movie-table">
+            </tbody>
+        </table>
+        <div class="pagination">
+            <button id="prevBtn">« ก่อนหน้า</button>
+            <span id="pageInfo">หน้า 1</span>
+            <button id="nextBtn">ถัดไป »</button>
+        </div>
+
+    </div>
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2>แก้ไขข้อมูลหนัง</h2>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <label>ชื่อเรื่อง:</label>
+                <input type="text" id="editTitle" required>
+
+                <label>ปี:</label>
+                <input type="number" id="editYear" required>
+
+                <label>ประเภท (คั่นด้วย ,):</label>
+                <input type="text" id="editGenres" required>
+
+                <label>เรตติ้ง:</label>
+                <input type="number" step="0.1" id="editRating" required>
+
+                <label>โปสเตอร์ URL:</label>
+                <input type="text" id="editPoster" required>
+
+                <button type="submit">บันทึก</button>
+            </form>
+        </div>
+    </div>
+
+</body>
+<script>
+    let currentPage = 1;
+    const limit = 5;
+    let currentEditingTitle = null;
+
+    function loadMovies(page) {
+        fetch(`/api/movies/table?page=${page}&limit=${limit}`)
+            .then(res => res.json())
+            .then(result => {
+                console.log("result", result)
+                const movies = result.movies;
+                const totalPages = result.totalPages;
+
+                const table = document.getElementById('movie-table');
+                table.innerHTML = "";
+
+                movies.forEach((movie, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${(page - 1) * limit + index + 1}</td>
+                        <td>
+                            <img 
+                            src="${movie.poster || "/static/images/no_img.png"}" 
+                            onerror="this.onerror=null;this.src='/static/images/no_image.png';" 
+                            class="poster-img" 
+                            alt="${movie.title}"
+                            />
+                        </td>
+                        <td>${movie.title || '-'}</td>
+                        <td>${movie.year || '-'}</td>
+                        <td>${movie.imdb?.rating || '-'}</td>
+                        <td>${movie.genres?.join(', ') || '-'}</td>
+                        <td>
+                            <button onclick="editMovie('${movie.title}')">แก้ไข</button>
+                            <button onclick="deleteMovie('${movie.title}')">ลบ</button>
+                        </td>
+                        `;
+                    table.appendChild(row);
+                });
+
+                document.getElementById("pageInfo").textContent = `หน้า ${page} / ${totalPages}`;
+                document.getElementById("prevBtn").disabled = (page === 1);
+                document.getElementById("nextBtn").disabled = (page === totalPages);
+
+                currentPage = page;
+            });
+    }
+
+    function editMovie(title) {
+        fetch(`/api/movies/${encodeURIComponent(title)}`)
+            .then(res => res.json())
+            .then(movie => {
+                currentEditingTitle = movie.title;
+                document.getElementById("editTitle").value = movie.title;
+                document.getElementById("editYear").value = movie.year;
+                document.getElementById("editGenres").value = movie.genres?.join(', ') || '';
+                document.getElementById("editRating").value = movie.imdb?.rating || '';
+                document.getElementById("editPoster").value = movie.poster || '';
+                document.getElementById("editModal").style.display = "block";
+            });
+    }
+
+    function closeModal() {
+        document.getElementById("editModal").style.display = "none";
+        currentEditingTitle = null;
+    }
+
+    document.getElementById("editForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const data = {
+            title: document.getElementById("editTitle").value,
+            year: parseInt(document.getElementById("editYear").value),
+            genres: document.getElementById("editGenres").value.split(',').map(s => s.trim()),
+            imdb: { rating: parseFloat(document.getElementById("editRating").value) },
+            poster: document.getElementById("editPoster").value
+        };
+
+        fetch(`/api/movies/${encodeURIComponent(currentEditingTitle)}`, {
+            method: "PUT",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        }).then(res => {
+            console.log("res",res)
+            if (res.ok) {
+                alert("บันทึกสำเร็จ");
+                closeModal();
+                loadMovies(currentPage);
+            } else {
+                alert("บันทึกไม่สำเร็จ");
+            }
+        });
+    });
+
+    function deleteMovie(title) {
+        if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ "${title}" ?`)) {
+            fetch(`/api/movies/${encodeURIComponent(title)}`, {
+                method: 'DELETE'
+            }).then(res => {
+                if (res.ok) {
+                    alert("ลบสำเร็จ");
+                    loadMovies(currentPage);
+                } else {
+                    alert("ลบไม่สำเร็จ");
+                }
+            });
+        }
+    }
+
+    document.getElementById("prevBtn").addEventListener("click", () => loadMovies(currentPage - 1));
+    document.getElementById("nextBtn").addEventListener("click", () => loadMovies(currentPage + 1));
+
+    loadMovies(1);
+</script>
+
+</html>
