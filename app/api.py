@@ -2,6 +2,8 @@ from flask import jsonify, request
 from app import app
 from bson import ObjectId
 from datetime import datetime
+from bson import ObjectId
+import datetime
 
 @app.route('/api/users')
 def get_users():
@@ -174,3 +176,59 @@ def add_comment():
     })
 
     return jsonify({"message": "Comment added successfully"})
+
+
+@app.route("/api/dashboard")
+def dashboard_data():
+    db = app.db
+
+    # อันเดิม
+    top_rated = list(db.movies.find({"imdb.rating": {"$exists": True}}, {"title": 1, "imdb.rating": 1}).sort("imdb.rating", -1).limit(5))
+    lowest_rated = list(db.movies.find({"imdb.rating": {"$exists": True}}, {"title": 1, "imdb.rating": 1}).sort("imdb.rating", 1).limit(5))
+    most_reviewed = list(db.movies.find({"imdb.votes": {"$exists": True}}, {"title": 1, "imdb.votes": 1}).sort("imdb.votes", -1).limit(5))
+    genre_counts = list(db.movies.aggregate([
+        {"$unwind": "$genres"},
+        {"$group": {"_id": "$genres", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]))
+
+    avg_rating_per_year = list(db.movies.aggregate([
+        {"$match": {"imdb.rating": {"$exists": True}, "year": {"$exists": True}}},
+        {"$group": {
+            "_id": "$year",
+            "avgRating": {"$avg": "$imdb.rating"}
+        }},
+        {"$sort": {"_id": 1}},
+        {"$limit": 20} 
+    ]))
+
+    movies_per_country = list(db.movies.aggregate([
+        {"$unwind": "$countries"},
+        {"$group": {
+            "_id": "$countries",
+            "count": {"$sum": 1}
+        }},
+        {"$sort": {"count": -1}},
+        {"$limit": 10}
+    ]))
+
+    return jsonify({
+        "topRated": convert_object(top_rated),
+        "lowestRated": convert_object(lowest_rated),
+        "mostReviewed": convert_object(most_reviewed),
+        "genreCounts": convert_object(genre_counts),
+        "avgRatingPerYear": convert_object(avg_rating_per_year),
+        "moviesPerCountry": convert_object(movies_per_country)
+    })
+
+def convert_object(obj):
+    if isinstance(obj, ObjectId):
+        return str(obj)
+    if isinstance(obj, datetime.datetime):
+        return obj.isoformat()
+    if isinstance(obj, list):
+        return [convert_object(i) for i in obj]
+    if isinstance(obj, dict):
+        return {k: convert_object(v) for k, v in obj.items()}
+    return obj

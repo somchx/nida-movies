@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>🎬 Dashboard - NIDA Movies</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: #111;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+        }
+
+        .dashboard-container {
+            padding: 40px;
+        }
+
+        h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #e50914;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .chart-card {
+            background: #1c1c1c;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo">🎬 NIDA Movies</div>
+        <div class="menu">
+            <a href="/home">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <div class="dropdown">
+                <a href="#" class="dropbtn">Setting ▾</a>
+                <div class="dropdown-content">
+                    <a href="/setting/movie">Setting Movie</a>
+                    <a href="/setting/user">Setting User</a>
+                </div>
+            </div>
+            <a href="/login">Logout</a>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <h1>📊 Movie Analytics Dashboard</h1>
+        <div class="chart-grid">
+            <div class="chart-card"><canvas id="topRatedChart"></canvas></div>
+            <div class="chart-card"><canvas id="lowestRatedChart"></canvas></div>
+            <div class="chart-card"><canvas id="mostReviewedChart"></canvas></div>
+            <div class="chart-card"><canvas id="genreChart"></canvas></div>
+            <div class="chart-card"><canvas id="avgRatingChart"></canvas></div>
+            <div class="chart-card"><canvas id="countryChart"></canvas></div>
+        </div>
+    </div>
+
+    <script>
+        fetch("/api/dashboard")
+            .then(res => res.json())
+            .then(data => {
+                const topRated = new Chart(document.getElementById("topRatedChart"), {
+                    type: 'bar',
+                    data: {
+                        labels: data.topRated.map(m => m.title),
+                        datasets: [{
+                            label: "Top Rated",
+                            data: data.topRated.map(m => m.imdb.rating),
+                            backgroundColor: '#16a34a'
+                        }]
+                    },
+                    options: {
+                        plugins: { title: { display: true, text: "Top 5 Highest Rated Movies" } },
+                        responsive: true
+                    }
+                });
+
+                const lowestRated = new Chart(document.getElementById("lowestRatedChart"), {
+                    type: 'bar',
+                    data: {
+                        labels: data.lowestRated.map(m => m.title),
+                        datasets: [{
+                            label: "Lowest Rated",
+                            data: data.lowestRated.map(m => m.imdb.rating),
+                            backgroundColor: '#ef4444'
+                        }]
+                    },
+                    options: {
+                        plugins: { title: { display: true, text: "Top 5 Lowest Rated Movies" } },
+                        responsive: true
+                    }
+                });
+
+                const mostReviewed = new Chart(document.getElementById("mostReviewedChart"), {
+                    type: 'bar',
+                    data: {
+                        labels: data.mostReviewed.map(m => m.title),
+                        datasets: [{
+                            label: "Votes",
+                            data: data.mostReviewed.map(m => m.imdb.votes),
+                            backgroundColor: '#f59e0b'
+                        }]
+                    },
+                    options: {
+                        plugins: { title: { display: true, text: "Top 5 Most Voted Movies" } },
+                        responsive: true
+                    }
+                });
+
+                const genreChart = new Chart(document.getElementById("genreChart"), {
+                    type: 'pie',
+                    data: {
+                        labels: data.genreCounts.map(g => g._id),
+                        datasets: [{
+                            label: "Genre Count",
+                            data: data.genreCounts.map(g => g.count),
+                            backgroundColor: [
+                                '#1e40af', '#10b981', '#ec4899',
+                                '#f97316', '#8b5cf6', '#ef4444',
+                                '#facc15', '#14b8a6', '#3b82f6', '#22c55e'
+                            ]
+                        }]
+                    },
+                    options: {
+                        plugins: { title: { display: true, text: "Genre Distribution" } },
+                        responsive: true
+                    }
+                });
+
+                const avgRatingChart = new Chart(document.getElementById("avgRatingChart"), {
+                    type: 'line',
+                    data: {
+                        labels: data.avgRatingPerYear.map(y => y._id),
+                        datasets: [{
+                            label: "Average Rating",
+                            data: data.avgRatingPerYear.map(y => y.avgRating.toFixed(2)),
+                            fill: false,
+                            borderColor: "#3b82f6",
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        plugins: { title: { display: true, text: "Average IMDb Rating by Year" } },
+                        responsive: true
+                    }
+                });
+
+                const countryChart = new Chart(document.getElementById("countryChart"), {
+                    type: 'bar',
+                    data: {
+                        labels: data.moviesPerCountry.map(c => c._id),
+                        datasets: [{
+                            label: "Number of Movies",
+                            data: data.moviesPerCountry.map(c => c.count),
+                            backgroundColor: '#8b5cf6'
+                        }]
+                    },
+                    options: {
+                        plugins: { title: { display: true, text: "Top 10 Movie-Producing Countries" } },
+                        responsive: true
+                    }
+                });
+
+            });
+    </script>
+
+</body>
+
+</html>

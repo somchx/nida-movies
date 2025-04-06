@@ -44,5 +44,8 @@ def movie_detail_page(id):
     comments = get_comments_by_movie_id(id)
     return render_template("movie_detail.html", movie=movie, comments=comments)
 
+@app.route("/dashboard")
+def dashboard_page():
+    return render_template("dashboard.html")
 
 
