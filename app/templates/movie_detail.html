@@ -23,7 +23,6 @@
     </div>
   </nav>
 
-  <!-- ✅ Main Content -->
   <div class="movie-container">
     <div class="movie-poster">
       <img src="{{ movie.poster or '/static/images/no_img.png' }}" alt="{{ movie.title }}">
@@ -64,7 +63,7 @@
       </div>
 
       <div class="action-buttons">
-        <button>WATCH MOVIE ▶</button>
+        <button onclick="alert_watach_movie()">WATCH MOVIE ▶</button>
       </div>
     </div>
   </div>
@@ -115,4 +114,8 @@
       }
     });
   });
+
+  function alert_watach_movie(){
+    alert("Enjoy this movie!")
+  }
 </script>
