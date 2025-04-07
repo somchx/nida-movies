@@ -4,6 +4,7 @@ from bson import ObjectId
 from datetime import datetime
 from bson import ObjectId
 import datetime
+import bcrypt
 
 @app.route('/api/users')
 def get_users():
@@ -15,6 +16,26 @@ def get_users():
     total_pages = (total + limit - 1) // limit
     users = list(collection.find({}, {"_id": 0, "name": 1, "email": 1}).skip(skip).limit(limit))
     return jsonify({ "users": users, "totalPages": total_pages, "total": total, "page": page })
+
+@app.route("/api/users", methods=["POST"])
+def create_user():
+    data = request.get_json()
+    name = data.get("name")
+    email = data.get("email")
+    password = data.get("password")
+
+    if not name or not email or not password:
+        return jsonify({"error": "Missing fields"}), 400
+
+    hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    user = {
+        "name": name,
+        "email": email,
+        "password": hashed_password
+    }
+
+    app.db["users"].insert_one(user)
+    return jsonify({"message": "User created"}), 201
 
 @app.route('/api/users/<email>', methods=['GET'])
 def get_user_by_mail(email):

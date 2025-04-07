@@ -189,6 +189,28 @@ table button:last-child {
     color: white;
 }
 
+.add-btn-container {
+    text-align: right;
+    margin-bottom: 15px;
+}
+
+.add-btn {
+    background-color: #18670a; /* เขียวมินต์ */
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-weight: bold;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+}
+
+.add-btn:hover {
+    background-color: #1b9605;
+}
+
 
 /* modal */
 
